@@ -1,0 +1,15 @@
+rule:
+  meta:
+    name: encrypt data using twofish wrapper
+    namespace: data-manipulation/encryption/twofish
+    author: "@_re_fox"
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Defense Evasion::Obfuscated Files or Information::Encryption-Standard Algorithm [E1027.m05]
+      - Cryptography::Encrypt Data::Twofish [C0027.005]
+    examples:
+      - 0761142efbda6c4b1e801223de723578:0x653F801C
+  features:
+    - match: encrypt data using twofish

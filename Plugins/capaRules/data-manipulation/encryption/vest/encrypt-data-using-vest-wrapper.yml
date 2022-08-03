@@ -1,0 +1,17 @@
+rule:
+  meta:
+    name: encrypt data using vest wrapper
+    namespace: data-manipulation/encryption/vest
+    author: "@_re_fox"
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Defense Evasion::Obfuscated Files or Information::Encryption-Standard Algorithm [E1027.m05]
+      - Cryptography::Encrypt Data [C0027]
+    references:
+      - https://www.ecrypt.eu.org/stream/vest.html
+    examples:
+      - 9a00ebe67d833edb70ed6dd0f4652592:0x180003EE9
+  features:
+    - match: encrypt data using vest

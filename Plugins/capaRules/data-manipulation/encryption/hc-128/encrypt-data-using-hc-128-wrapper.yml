@@ -1,0 +1,19 @@
+rule:
+  meta:
+    name: encrypt data using HC-128 wrapper
+    namespace: data-manipulation/encryption/hc-128
+    author: awillia2@cisco.com
+    description: Looks for instruction mnemonics associated with initialization of the HC-128 stream cipher
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Defense Evasion::Obfuscated Files or Information::Encryption-Standard Algorithm [E1027.m05]
+      - Cryptography::Encrypt Data::HC-128 [C0027.006]
+    references:
+      - https://download.bitdefender.com/resources/files/News/CaseStudies/study/318/Bitdefender-TRR-Whitepaper-Maze-creat4351-en-EN-GenericUse.pdf
+      - https://github.com/rost1993/hc128/blob/master/hc128.c
+    examples:
+      - e69a8eb94f65480980deaf1ff5a431a6:0x405D0D
+  features:
+    - match: encrypt data using HC-128

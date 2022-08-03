@@ -1,0 +1,11 @@
+rule:
+  meta:
+    name: packaged as a NSIS installer
+    namespace: executable/installer/nsis
+    author: moritz.raabe@mandiant.com
+    scope: file
+    references:
+      - https://nsis.sourceforge.io/Main_Page
+  features:
+    - or:
+      - substring: "http://nsis.sf.net"

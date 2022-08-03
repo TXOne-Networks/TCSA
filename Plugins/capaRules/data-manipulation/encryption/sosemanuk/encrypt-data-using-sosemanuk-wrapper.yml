@@ -1,0 +1,18 @@
+rule:
+  meta:
+    name: encrypt data using Sosemanuk wrapper
+    namespace: data-manipulation/encryption/sosemanuk
+    author: awillia2@cisco.com
+    description: Looks for cryptographic constants associated with the Sosemanuk stream cipher
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Defense Evasion::Obfuscated Files or Information::Encryption-Standard Algorithm [E1027.m05]
+      - Cryptography::Encrypt Data::Sosemanuk [C0027.008]
+    references:
+      - https://labs.sentinelone.com/enter-the-maze-demystifying-an-affiliate-involved-in-maze-snow/
+    examples:
+      - ea7bb99e03606702c1cbe543bb32b27e:0x10003350
+  features:
+    - match: encrypt data using Sosemanuk

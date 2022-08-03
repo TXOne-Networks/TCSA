@@ -1,0 +1,12 @@
+rule:
+  meta:
+    name: encrypt data via SSPI wrapper
+    namespace: data-manipulation/encryption
+    author: matthew.williams@mandiant.com
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    references:
+      - https://docs.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-encryptmessage
+  features:
+    - match: encrypt data via SSPI

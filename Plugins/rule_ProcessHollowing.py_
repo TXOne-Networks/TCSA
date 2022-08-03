@@ -1,0 +1,92 @@
+'''
+Determine Input Binaries Have The Ability of Process Hollowing.
+
+Plugin Concpet from SetupTools:
+https://github.com/OctoPrint/Plugin-Examples/blob/master/helloworld/setup.py
+'''
+useNewProc, useVAlloc, useWriteMem, hijackImgBase, copyHeadersToRemote = ( False, ) * 5
+ptrPInfo, ptrPeb, guessDosHdrQueue = None, None, []
+chakraCore = None
+
+def callback(emu, starteip, op, iscall, callname, argv, argv_snapshot, ret):
+    global chakraCore, ptrPInfo, ptrPeb, guessDosHdrQueue, useNewProc, useVAlloc, useWriteMem, hijackImgBase, copyHeadersToRemote
+    
+    arglist = op.getOperands()
+    if not iscall and len(arglist) > 1 and arglist[1].isDeref(): # mov eax, [ebx + 0x3C] <<< IMAGE_DOS_HEADER.e_lfranew
+        dataRef_withImmNum = getattr(arglist[1], 'disp', 0)
+        if dataRef_withImmNum == 0x3C: 
+            guessDosHdrAddr = emu.getOperAddr(op, 1) - 0x3C
+            if not guessDosHdrAddr in guessDosHdrQueue:
+                print(f'[*] {hex(starteip)} - guess PE file start at (IMAGE_DOS_HEADER*) {guessDosHdrAddr}')
+                guessDosHdrQueue.append(guessDosHdrAddr)
+                
+    # taint the dynamic func name from ret value.
+    if iscall and callname == 'UnknownApi':
+        if knownPtrName := emu.reprVivValue(ret).split('(')[0]:
+            callname = knownPtrName
+            argv = [ istack_val[1] for istack_val in argv_snapshot ]
+    
+    if not iscall or callname == None : return
+
+    CREATE_SUSPENDED = 0x04
+    if 'CreateProcess' in callname and argv[5] == CREATE_SUSPENDED:
+        useNewProc = True
+        ptrPInfo = argv[9]
+        print(f'[*] {callname}{tuple(argv)}')
+        print(f'[v] detect New Suspended Proceess ProcessInfo struct (ProcInfo) @ {(ptrPInfo)}')
+        
+    elif 'VirtualAllocEx' in callname:                 # VirtualAllocEx( hProcess, imgBase, memSize, type, protection )＄＄        refCode, hProcsRef = chakraCore.getReference_ofArg(stackptr, argv[0], 0) # get reference of hProcess value from.
+        argName, argVal = argv_snapshot[0]
+        hProcsRef = chakraCore.currSimulate.getAny_refOfData(argName, argVal)     # get reference of imgBase  value from.
+        
+        argName, argVal = argv_snapshot[1]
+        imgbasRef = chakraCore.currSimulate.getAny_refOfData(argName, argVal)     # get reference of imgBase  value from.
+        
+        if hProcsRef == (ptrPInfo + 0):                                          # try to valloc on the new process?
+            print(f'[*] VirtualAlloc use handle({argv[0]}) from ProcInfo.hProcess @ {hProcsRef}  ...return {ret}')
+            print(f'[v] detect imagebase value from memory {imgbasRef}')
+            useVAlloc = True
+            
+    elif 'WriteProcessMemory' in callname:
+        argName, argVal = argv_snapshot[0]
+        hProcsRef = chakraCore.currSimulate.getAny_refOfData(argName, argVal) 
+        if hProcsRef == (ptrPInfo + 0):                                          # try to write memory of the new process?
+            useWriteMem = True
+
+            argName, argVal = argv_snapshot[1]
+            if pebAddrRef := chakraCore.currSimulate.getAny_refOfData(argName, argVal):          # where're you writing at? is that CONTEXT.ebx (PEB) + 8?
+                if _ := ptrPeb and pebAddrRef == ptrPeb + 8:                 
+                    hijackImgBase = True
+                    print(f'[v] detect write remote PEB.imagebase to hijack main module.')
+
+            if argv[2] in guessDosHdrQueue: # trying to copy DOS+NT+Section headers 3 blocks to remote?
+                argName, argVal = argv_snapshot[3]
+                dataSizeRef = chakraCore.currSimulate.getAny_refOfData( argName, argVal)
+                guessNtHdrAddr = argv[2] + emu.readMemoryPtr( argv[2] + 0x3c )
+                if guessNtHdrAddr + 0x18 + 0x3C == dataSizeRef:  # is that size from NtHdr.OptionalHeader(+18h).SizeOfHeaders(+3Ch)
+                    print('[v] detect copy PE headers to remote, include DOS+NT+Sections.')
+                    copyHeadersToRemote = True
+
+    elif 'GetThreadContext' in callname:
+        argName, argVal = argv_snapshot[0]
+        hProcsRef = chakraCore.currSimulate.getAny_refOfData(argName, argVal)
+        if hProcsRef == (ptrPInfo + 4):                                          # try to get suspended thread context of the new process?
+            ptrPeb = argv[1] + 0xA4                                              # offset CONTEXT.ebx = 0xA4
+
+# semantics-capability-automata
+def initialize( In_chakraCore ):
+    global chakraCore
+    print("[OK] Rule Attached - Process Hollowing.")
+    chakraCore = In_chakraCore
+    pass
+
+def cleanup( In_chakraCore ):
+    if useNewProc and useVAlloc and useWriteMem and hijackImgBase and copyHeadersToRemote:
+        print(' !!! Assert That should be Hollowing Tricks !!! ')
+
+    print(f'\n === [Capability-Detection] === ')
+    print(f' Create Suspended Process                      : {useNewProc}')
+    print(f' Malloc Memory at NtHdr.OptionalHeader.Imgbase : {useNewProc}')
+    print(f' Hijack ImageBase of Main PE Module            : {hijackImgBase}')
+    print(f' Copy PE Headers (DOS, NT, Sections) to Remote : {copyHeadersToRemote}')
+    pass

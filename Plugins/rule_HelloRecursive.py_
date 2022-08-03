@@ -1,0 +1,91 @@
+'''
+Determine Input Binaries Have The Ability of Process Hollowing.
+
+Plugin Concpet from SetupTools:
+https://github.com/OctoPrint/Plugin-Examples/blob/master/helloworld/setup.py
+'''
+from ast import arg
+from glob import glob
+from inspect import trace
+import opcode
+from tracemalloc import Snapshot, start
+import akali
+chakraCore: akali.chakraEngine = None
+getFileSize_record = ( 0xdeadbeef, None ) # ( fva, buffer2check )
+
+def callback(emu, starteip, op, iscall, callname, argv, argv_snapshot, ret):
+    # taint the dynamic func name from ret value.
+    if iscall and callname == 'UnknownApi':
+        if  knownPtrName := emu.reprVivValue(ret).split('(')[0]:
+            callname = knownPtrName
+            argv = [ istack_val[1] for istack_val in argv_snapshot ]
+
+    #if iscall: print(f'{hex(starteip)} - {callname}{tuple(argv)} return {ret}')
+    #else: print(f'{hex(starteip)} - {op}')
+
+    if starteip == 0x04015A3:
+        global getFileSize_record
+        if len(argv_snapshot) > 0:
+            getFileSize_record = ( chakraCore.te.emu.funcva, argv_snapshot[1] ) # snapshot argv0 buffer & value when GetFileSize got invoked.
+
+
+def scan_defuseChain(funcva, cur_buff, assign_val):
+    assignfromList = []
+    print(f"[+] Scanning Defuse for the buffer {cur_buff}'s value = {assign_val}")
+
+    while True:
+        
+        # is that value of the source comes from local variables? 
+        if  _ := chakraCore.globalDefuse.get_RefOfData(funcva, cur_buff, assign_val):
+            dataRef, refType, refCode = _
+
+            if dataRef not in assignfromList:
+                print(f"    Find a defintion at {hex(refCode)}, xRef: {dataRef}")
+                print(f"    $ {hex(refCode)} - {chakraCore.te.emu.parseOpcode(refCode)}\n")
+                assignfromList.append(dataRef)
+                cur_buff = dataRef
+
+        # we trace to the earliest defintion of the value? anlayze the arguments from caller
+        elif _ := chakraCore.globalDefuse.get_funcArgv_OfData(funcva, cur_buff, assign_val):
+            dataRef, refType, refCode = _
+
+            print(f"    Find a defintion at {hex(refCode)}, xRef: {dataRef}")
+            print(f"    $ {hex(refCode)} - {chakraCore.te.emu.parseOpcode(refCode)}\n")
+
+            print(f"    ~~~ Reach the first definition in the sub_{funcva:x} ~~~ \n")
+            callerQueue = chakraCore.lookup_Caller(funcva)
+            assert len(callerQueue) == 1, "Trace only One Caller now."
+            funcva, caller_argvSnapshot = callerQueue[0]
+
+            # trace back: recover to the snapshoted variables inside caller
+            assign_val = next(filter( lambda elemt: elemt[0] == dataRef,  caller_argvSnapshot))[1]
+            assignfromList = []
+            cur_buff = dataRef
+        
+        elif _ := chakraCore.globalDefuse.get_forkRef_OfData(funcva, cur_buff, assign_val):
+            (dataSrc, srcVal, delta), refType, refCode = _
+            print(f"    Find a defintion at {hex(refCode)}, xRef: {dataSrc} + {delta}")
+            print(f"    $ {hex(refCode)} - {chakraCore.te.emu.parseOpcode(refCode)}\n")
+            assign_val = srcVal
+            cur_buff = dataSrc
+
+        elif _:= chakraCore.globalDefuse.get_retVal_RefOfCall(funcva, cur_buff, assign_val):
+            dataRef, refType, refCode = _
+            print(f"    Find a defintion at {hex(refCode)}, xRef: {dataRef}")
+            print(f"    $ {hex(refCode)} - {chakraCore.te.emu.parseOpcode(refCode)}\n")
+            break
+
+
+# semantics-capability-automata
+def initialize( In_chakraCore ):
+    global chakraCore
+    print("[OK] Rule Attached - Hello Recursive.")
+    chakraCore = In_chakraCore
+    pass
+
+def cleanup( In_chakraCore ):
+    funcva, buff2check = getFileSize_record
+    if funcva != None and buff2check != None:
+        scan_defuseChain( funcva, *buff2check ) 
+
+    pass

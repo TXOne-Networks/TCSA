@@ -1,0 +1,29 @@
+rule:
+  meta:
+    name: encrypt data using R5A
+    namespace: data-manipulation/encryption/R5A
+    author: hank_chen@txone.com
+    description: Looks for instruction mnemonics associated with the R5A cipher
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Defense Evasion::Obfuscated Files or Information::Encryption-Standard Algorithm [E1027.m05]
+      - Cryptography::Encrypt Data::R5A [C0027.006]
+    references:
+      - https://blog.malwarebytes.com/threat-analysis/2016/05/7ev3n-ransomware/
+      - https://github.com/hasherezade/malware_analysis/tree/master/7ev3n
+    examples:
+      - 32a56ca79f17fea432250ee704432dfc:0x41AC20
+  features:
+    - and:
+      # TODO: maybe add characteristic for nzxor reg size
+      - count(characteristic(nzxor)): 2 or more
+      - or:
+        - match: calculate modulo 256 via x86 assembly
+        # compiler may do this via zero-extended mov from 8-bit register
+        - count(mnemonic(movzx)): 4 or more
+      - match: contain loop
+      - and:
+        - number: 0x4d = M
+        - mnemonic: cmp

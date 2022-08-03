@@ -1,0 +1,17 @@
+# generated using capa explorer for IDA Pro
+rule:
+  meta:
+    name: encrypt data using FAKEM cipher wrapper
+    namespace: data-manipulation/encryption
+    author: michael.hunhoff@mandiant.com
+    description: Detect custom encryption cipher used by FAKEM malware family
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Cryptography::Decrypt Data [C0031]
+      - Cryptography::Encrypt Data [C0027]
+    references: https://attack.mitre.org/software/S0076/
+  features:
+    - match: encrypt data using FAKEM cipher
+

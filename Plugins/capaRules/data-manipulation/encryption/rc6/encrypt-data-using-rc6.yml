@@ -1,0 +1,21 @@
+rule:
+  meta:
+    name: encrypt data using RC6
+    namespace: data-manipulation/encryption/rc6
+    author: william.ballenthin@mandiant.com
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Defense Evasion::Obfuscated Files or Information::Encryption-Standard Algorithm [E1027.m05]
+      - Cryptography::Encrypt Data::RC6 [C0027.010]
+    references:
+      - ref: https://github.com/stamparm/cryptospecs/blob/master/symmetrical/sources/rc6.c#L66
+    examples:
+      - D87BA0BFCE1CDB17FD243B8B1D247E88:0x402390
+  features:
+    - and:
+      - number: 0xB7E15163 = RC5 and RC6 (more common)
+      - or:
+        - number: 0x9e3779b9 = encrypt via add an unsigned
+        - number: 0x61C88647 = encrypt via subtract an unsigned

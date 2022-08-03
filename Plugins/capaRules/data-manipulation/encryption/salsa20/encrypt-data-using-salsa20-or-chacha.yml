@@ -1,0 +1,91 @@
+rule:
+  meta:
+    name: encrypt data using Salsa20 or ChaCha
+    namespace: data-manipulation/encryption/salsa20
+    author: moritz.raabe@mandiant.com
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    references:
+      - http://cr.yp.to/snuffle/ecrypt.c
+  features:
+    - or:
+      - and:
+        - and:
+          - number: 0x10
+          - mnemonic: rol
+        - and:
+          - number: 0xc
+          - mnemonic: rol
+        - and:
+          - number: 0x8
+          - mnemonic: rol
+        - and:
+          - number: 0x7
+          - mnemonic: rol
+      - and:
+        - and:
+          - number: 0x7
+          - mnemonic: rol
+        - and:
+          - number: 0x9
+          - mnemonic: rol
+        - and:
+          - number: 0xd
+          - mnemonic: rol
+        - and:
+          - number: 0xe
+          - mnemonic: ror
+      - and:
+        - and:
+          - number: 0x10
+          - mnemonic: psrld
+        - and:
+          - number: 0x14
+          - mnemonic: psrld
+        - and:
+          - number: 0x18
+          - mnemonic: psrld
+        - and:
+          - number: 0x19
+          - mnemonic: psrld
+      - and:
+        - and:
+          - number: 0x10
+          - mnemonic: shl
+        - and:
+          - number: 0x10
+          - mnemonic: shr
+        - and:
+          - number: 0xc
+          - mnemonic: shl
+        - and:
+          - number: 0x14
+          - mnemonic: shr
+        - and:
+          - number: 0x8
+          - mnemonic: shl
+        - and:
+          - number: 0x18
+          - mnemonic: shr
+        - and:
+          - number: 0x7
+          - mnemonic: shl
+        - and:
+          - number: 0x19
+          - mnemonic: shr
+      - and:
+        - and:
+          - number: 0x7
+          - mnemonic: rol
+        - and:
+          - number: 0x9
+          - mnemonic: rol
+        - and:
+          - number: 0xd
+          - mnemonic: rol
+        - and:
+          - number: 0x12
+          - mnemonic: rol
+
+

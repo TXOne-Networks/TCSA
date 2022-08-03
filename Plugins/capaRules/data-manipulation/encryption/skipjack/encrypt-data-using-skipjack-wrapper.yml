@@ -1,0 +1,15 @@
+rule:
+  meta:
+    name: encrypt data using skipjack wrapper
+    namespace: data-manipulation/encryption/skipjack
+    author: "@_re_fox"
+    scope: function
+    att&ck:
+      - Defense Evasion::Obfuscated Files or Information [T1027]
+    mbc:
+      - Defense Evasion::Obfuscated Files or Information::Encryption-Standard Algorithm [E1027.m05]
+      - Cryptography::Encrypt Data::Skipjack [C0027.013]
+    examples:
+      - 94d3c854aadbcfde46b2f82801015c31:0x429C0730
+  features:
+    - match: encrypt data using skipjack
