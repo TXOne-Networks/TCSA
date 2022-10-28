@@ -387,7 +387,7 @@ def find_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, disable_pro
 
     # pb = pbar(functions, desc="matching", unit=" functions", postfix="skipped 0 library functions")
     for f in functions:
-        function_address = int(f)
+        function_address = int(f.address)
 
         if extractor.is_library_function(function_address):
             function_name = extractor.get_function_name(function_address)
@@ -464,7 +464,7 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
                 bb_features[feature].add(va)
                 function_features[feature].add(va)
 
-        _, matches = ruleset.match(Scope.BASIC_BLOCK, bb_features, int(bb))
+        _, matches = ruleset.match(Scope.BASIC_BLOCK, bb_features, int(bb.address))
         # print(f, matches)
 
         for rule_name, res in matches.items():
@@ -477,7 +477,7 @@ def find_function_capabilities(ruleset: RuleSet, extractor: FeatureExtractor, f:
             # res = [(int(f),_) for va, _ in res]    
             bb_matches[rule_name].extend(res)
 
-    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, int(f))
+    _, function_matches = ruleset.match(Scope.FUNCTION, function_features, int(f.address))
     # print("function_matches: ", function_matches)
     # print("bb_matches: ", bb_matches)
 
