@@ -8,5 +8,5 @@ TXOne Code Semantics Analyzer by TXOne Networks, inc.
 
 ## Installation
 
-1. Script Usage: `$pip install vivisect` then `$python3 Akali/akali.py samples/hello_recur.exe`
+1. Script Usage: `$pip3 install viv_utils vivisect ruamel.yaml` then `$python3 TCSA/tcsa.py samples/hello_recur.exe`
 2. Standalone Build: `$pyinstaller .github\pyinstaller\akali.spec` then `$dist\akali.exe samples\hello_recur.exe`
